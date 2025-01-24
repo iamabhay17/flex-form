@@ -80,11 +80,15 @@ export const Field = ({
 
     case FieldTypes.INPUT:
       return (
-        <FormItem className="mb-1.5">
+        <FormItem className="mb-4">
           <Label>{field.title}</Label>
           <FormDescription>{field.description}</FormDescription>
           <FormControl>
-            <Input className="max-w-[302px]" {...fieldInstance} />
+            <Input
+              className="max-w-[302px]"
+              placeholder="Enter text"
+              {...fieldInstance}
+            />
           </FormControl>
           <FormMessage />
         </FormItem>
@@ -95,11 +99,15 @@ export const Field = ({
      */
     case FieldTypes.TEXT_AREA:
       return (
-        <FormItem className="mb-1.5">
+        <FormItem className="mb-4">
           <Label>{field.title}</Label>
           <FormDescription>{field.description}</FormDescription>
           <FormControl>
-            <Textarea className="max-w-[302px]" {...fieldInstance} />
+            <Textarea
+              placeholder="Enter content"
+              className="max-w-[302px] h-[100px]"
+              {...fieldInstance}
+            />
           </FormControl>
           <FormMessage />
         </FormItem>
@@ -113,6 +121,7 @@ export const Field = ({
       return (
         <FormItem className="flex flex-col mb-4">
           <Label>{field.title}</Label>
+          <FormDescription>{field.description}</FormDescription>
           <Popover>
             <PopoverTrigger asChild>
               <FormControl>
@@ -151,11 +160,12 @@ export const Field = ({
 
     case FieldTypes.CHECKBOX_GROUP:
       return (
-        <FormItem className="space-y-3">
+        <FormItem className="mb-4">
           <Label>{field.title}</Label>
+          <FormDescription>{field.description}</FormDescription>
           <Show if={(field?.options || []).length > 0}>
             <FormControl>
-              <div className="flex flex-col space-y-2">
+              <div className="flex flex-col pt-3 space-y-2">
                 {(field.options || []).map((option: string) => (
                   <FormItem
                     key={option}
@@ -191,9 +201,9 @@ export const Field = ({
      */
     case FieldTypes.CHECKBOX:
       return (
-        <FormItem className="flex flex-col mb-4 ">
+        <FormItem className="flex flex-col space-y-2 mb-4 ">
           <Label>{field.title}</Label>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-4">
             <FormControl>
               <Checkbox
                 checked={fieldInstance.value}
@@ -211,7 +221,7 @@ export const Field = ({
      */
     case FieldTypes.SELECT:
       return (
-        <FormItem className=" mb-1.5">
+        <FormItem className="mb-4">
           <Label>{field.title}</Label>
           <FormDescription>{field.description}</FormDescription>
           <Show if={(field?.options || []).length > 0}>
@@ -244,7 +254,7 @@ export const Field = ({
      */
     case FieldTypes.RADIO_GROUP:
       return (
-        <FormItem className=" mb-1.5">
+        <FormItem className=" mb-4">
           <Label>{field.title}</Label>
           <Show if={(field?.options || []).length === 0}>
             <FormDescription>No Options Provided</FormDescription>

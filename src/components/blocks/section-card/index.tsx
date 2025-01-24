@@ -22,21 +22,23 @@ import {
   CardContent,
 } from "@/components/ui/card";
 
+import { toast } from "sonner";
 import { Show } from "@/components/ui/show";
-import { Edit2, GripVertical, PenBox, Trash2 } from "lucide-react";
-import { ISection, useFormStore } from "@/store";
+import { FormField } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/blocks/field";
-import { toast } from "sonner";
-import { Sheet, SheetTrigger } from "@/components/ui/sheet";
-import { ConfigSidebar } from "@/components/blocks/config-sidebar";
-import { FormField } from "@/components/ui/form";
-import { UseFormReturn } from "react-hook-form";
+import { type ISection, useFormStore } from "@/store";
+import type { UseFormReturn } from "react-hook-form";
+import { Dialog, DialogTrigger } from "@/components/ui/dialog";
+import { ConfigDialog } from "@/components/blocks/config-dialog";
+import { Edit2, GripVertical, PenBox, Trash2 } from "lucide-react";
 
 export const SectionCard = ({
+  viewMode,
   section,
   form,
 }: {
+  viewMode: boolean;
   section: ISection;
   form: UseFormReturn;
 }) => {
@@ -47,12 +49,13 @@ export const SectionCard = ({
   const [{ canDrop, isOver }, drop] = useDrop(() => ({
     accept: "field",
     drop: (data: { title: string; type: string }) => {
+      const uniqueKey = crypto.randomUUID();
       const field = {
-        id: crypto.randomUUID(),
-        key: data.title,
+        id: uniqueKey,
+        key: uniqueKey,
         type: data.type,
         title: data.title,
-        description: "Update field description",
+        description: "Add some description here",
         validations: { required: false },
       };
       store.insertItem(section.id, field);
@@ -98,6 +101,22 @@ export const SectionCard = ({
             className={cn("grid gap-2 grid-cols-1", getClasses())}
           >
             {section.fields.map((field) => {
+              if (viewMode) {
+                return (
+                  <FormField
+                    key={field.id}
+                    control={form.control}
+                    name={field.key}
+                    render={({ field: fieldInstance }) => (
+                      <Field
+                        field={field}
+                        form={form}
+                        fieldInstance={fieldInstance}
+                      />
+                    )}
+                  />
+                );
+              }
               return (
                 <div
                   key={field.id}
@@ -110,14 +129,14 @@ export const SectionCard = ({
                     >
                       <GripVertical className="h-4 w-4 text-primary/60" />
                     </button>
-                    <Sheet>
-                      <SheetTrigger asChild>
+                    <Dialog>
+                      <DialogTrigger asChild>
                         <button className="p-2 rounded-lg hover:bg-primary/10 active:bg-primary/20 transition-colors duration-200">
                           <Edit2 className="h-4 w-4 text-primary/60" />
                         </button>
-                      </SheetTrigger>
-                      <ConfigSidebar type="field" id={field.id} />
-                    </Sheet>
+                      </DialogTrigger>
+                      <ConfigDialog type="field" id={field.id} />
+                    </Dialog>
 
                     <button
                       onClick={() => store.removeItem(section.id, field.id)}
@@ -146,7 +165,7 @@ export const SectionCard = ({
           </div>
         </CardContent>
       </Card>
-      <Show if={isHovered}>
+      <Show if={isHovered && !viewMode}>
         <CardActions cardId={section.id} />
       </Show>
     </div>
@@ -165,18 +184,14 @@ export const CardActions = ({ cardId }: { cardId: string }) => {
 
   return (
     <div className="flex gap-2 absolute top-2 right-2">
-      {/**
-       * Edit section
-       */}
-
-      <Sheet>
-        <SheetTrigger asChild>
+      <Dialog>
+        <DialogTrigger asChild>
           <Button variant="outline" size="icon" title="Edit section">
             <PenBox />
           </Button>
-        </SheetTrigger>
-        <ConfigSidebar type="card" id={cardId} />
-      </Sheet>
+        </DialogTrigger>
+        <ConfigDialog type="card" id={cardId} />
+      </Dialog>
 
       {/**
        * Confirmation dialog to delete section

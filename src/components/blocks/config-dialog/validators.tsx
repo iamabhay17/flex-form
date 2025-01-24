@@ -20,11 +20,13 @@ export const fieldValidator = z
       .default("text"),
     validations: z.object({
       required: z.boolean().optional().default(false),
-      min: z.number().optional().default(0),
-      max: z.number().optional(),
-      minLength: z.number().optional().default(0),
-      maxLength: z.number().optional(),
+      min: z.coerce.number().optional().default(0),
+      max: z.coerce.number().optional(),
+      minLength: z.coerce.number().optional().default(0),
+      maxLength: z.coerce.number().optional(),
       pattern: z.string().optional(),
+      gte: z.coerce.number().optional(),
+      lte: z.coerce.number().optional(),
     }),
   })
   .superRefine((values, ctx) => {

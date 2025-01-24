@@ -1,28 +1,20 @@
-import { z } from "zod";
-
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-
 import {
-  SheetClose,
-  SheetContent,
-  SheetDescription,
-  SheetFooter,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
-
-import { Loader2, Trash2 } from "lucide-react";
-import { useFieldArray, useForm } from "react-hook-form";
-import { useEffect, useState } from "react";
-import { fieldValidator, sectionValidator } from "./validators";
-import { Textarea } from "@/components/ui/textarea";
-import { zodResolver } from "@hookform/resolvers/zod";
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import { IFormField, ISection, useFormStore } from "@/store";
+import { useEffect, useState } from "react";
+import { CalendarIcon, Loader2, Trash2 } from "lucide-react";
+
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormMessage,
@@ -37,13 +29,31 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Show } from "@/components/ui/show";
-import { Switch } from "@/components/ui/switch";
-import { FieldTypes } from "@/components/blocks/app-sidebar/sidebar-const";
+import { useFieldArray, useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  fieldValidator,
+  sectionValidator,
+} from "@/components/blocks/config-dialog/validators";
+import { z } from "zod";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Switch } from "@/components/ui/switch";
+import { Show } from "@/components/ui/show";
+import { FieldTypes } from "@/components/blocks/app-sidebar/sidebar-const";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
+import { Calendar } from "@/components/ui/calendar";
+import { format, isValid } from "date-fns";
 
-export function ConfigSidebar({ type, id }: { type: string; id: string }) {
+export function ConfigDialog({ type, id }: { type: string; id: string }) {
   const store = useFormStore();
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<IFormField | ISection | null>(null);
@@ -84,13 +94,13 @@ export function ConfigSidebar({ type, id }: { type: string; id: string }) {
   }
 
   return type === "card" ? (
-    <CardSheet data={data as ISection} />
+    <CardConfigDialog data={data as ISection} />
   ) : (
-    <FieldSheet data={data as IFormField} />
+    <FieldConfigDialog data={data as IFormField} />
   );
 }
 
-const CardSheet = ({ data }: { data: ISection }) => {
+export function CardConfigDialog({ data }: { data: ISection }) {
   const store = useFormStore();
   const form = useForm({
     resolver: zodResolver(sectionValidator),
@@ -107,15 +117,14 @@ const CardSheet = ({ data }: { data: ISection }) => {
       ...values,
     });
   };
-
   return (
-    <SheetContent>
-      <SheetHeader>
-        <SheetTitle>Edit Section Details</SheetTitle>
-        <SheetDescription>
+    <DialogContent>
+      <DialogHeader>
+        <DialogTitle>Edit Section Details</DialogTitle>
+        <DialogDescription>
           Make changes to your form section here. Click save when you're done.
-        </SheetDescription>
-      </SheetHeader>
+        </DialogDescription>
+      </DialogHeader>
       <form onSubmit={form.handleSubmit(onSubmit)}>
         <Form {...form}>
           <div className="grid gap-4 py-4">
@@ -172,18 +181,19 @@ const CardSheet = ({ data }: { data: ISection }) => {
               )}
             />
           </div>
-          <SheetFooter>
-            <SheetClose asChild>
+
+          <DialogFooter>
+            <DialogClose asChild>
               <Button type="submit">Save changes</Button>
-            </SheetClose>
-          </SheetFooter>
+            </DialogClose>
+          </DialogFooter>
         </Form>
       </form>
-    </SheetContent>
+    </DialogContent>
   );
-};
+}
 
-const FieldSheet = ({ data }: { data: IFormField }) => {
+export function FieldConfigDialog({ data }: { data: IFormField }) {
   const store = useFormStore();
   const form = useForm({
     resolver: zodResolver(fieldValidator),
@@ -199,6 +209,8 @@ const FieldSheet = ({ data }: { data: IFormField }) => {
         minLength: undefined,
         maxLength: undefined,
         pattern: undefined,
+        gte: undefined,
+        lte: undefined,
       },
       options: data.options || [],
       subType: data.subType || "text",
@@ -214,27 +226,28 @@ const FieldSheet = ({ data }: { data: IFormField }) => {
     name: "options",
   });
 
+  console.log("formdata", form.formState.errors);
+
   const onSubmit = (values: any) => {
-    console.log("values", values);
+    console.log("values", { ...data, ...values });
     store.updateItem({
       ...data,
       ...values,
     });
     toast.success("Field updated successfully");
   };
-
   return (
-    <SheetContent>
-      <SheetHeader>
-        <SheetTitle>Edit Field Details</SheetTitle>
-        <SheetDescription>
+    <DialogContent>
+      <DialogHeader>
+        <DialogTitle>Edit Field Details</DialogTitle>
+        <DialogDescription>
           Make changes to your field here. Click save when you're done.
-        </SheetDescription>
-      </SheetHeader>
+        </DialogDescription>
+      </DialogHeader>
       <form onSubmit={form.handleSubmit(onSubmit)}>
         <Form {...form}>
-          <ScrollArea className="h-[70vh]">
-            <div className="grid gap-4 py-4">
+          <ScrollArea className="h-[70vh] mb-4">
+            <div className="grid gap-4 w-[92%] mx-auto py-4">
               <FormField
                 control={form.control}
                 name="key"
@@ -296,7 +309,7 @@ const FieldSheet = ({ data }: { data: IFormField }) => {
               <Show if={data.type === FieldTypes.INPUT}>
                 <FormField
                   control={form.control}
-                  name="subType"
+                  name="validations.pattern"
                   render={({ field }) => (
                     <FormItem>
                       <Label>Regex Pattern</Label>
@@ -309,7 +322,7 @@ const FieldSheet = ({ data }: { data: IFormField }) => {
                 />
                 <FormField
                   control={form.control}
-                  name="validations.pattern"
+                  name="subType"
                   render={({ field }) => (
                     <FormItem>
                       <Label>Input type</Label>
@@ -425,6 +438,7 @@ const FieldSheet = ({ data }: { data: IFormField }) => {
                       <FormControl>
                         <Input type="number" {...field} />
                       </FormControl>
+                      <FormMessage />
                     </FormItem>
                   )}
                 />
@@ -444,6 +458,7 @@ const FieldSheet = ({ data }: { data: IFormField }) => {
                       <FormControl>
                         <Input type="number" {...field} />
                       </FormControl>
+                      <FormMessage />
                     </FormItem>
                   )}
                 />
@@ -456,19 +471,108 @@ const FieldSheet = ({ data }: { data: IFormField }) => {
                       <FormControl>
                         <Input type="number" {...field} />
                       </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </Show>
+              <Show if={data.type === FieldTypes.DATE_TIME}>
+                <FormField
+                  control={form.control}
+                  name="validations.gte"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col mb-4">
+                      <Label>Greater than</Label>
+                      <FormDescription>
+                        Date should be greater than
+                      </FormDescription>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button
+                              variant={"outline"}
+                              className={cn(
+                                " pl-3 text-left font-normal",
+                                !field.value && "text-muted-foreground"
+                              )}
+                            >
+                              {isValid(field.value) ? (
+                                format(field.value || new Date(), "PPP")
+                              ) : (
+                                <span>Pick a date</span>
+                              )}
+                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={
+                              field.value ? new Date(field.value) : new Date()
+                            }
+                            onSelect={field.onChange}
+                            initialFocus
+                          />
+                        </PopoverContent>
+                      </Popover>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="validations.lte"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col mb-4">
+                      <Label>Less than</Label>
+                      <FormDescription>
+                        Date should be less than
+                      </FormDescription>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button
+                              variant={"outline"}
+                              className={cn(
+                                " pl-3 text-left font-normal",
+                                !field.value && "text-muted-foreground"
+                              )}
+                            >
+                              {isValid(field.value) ? (
+                                format(field.value || new Date(), "PPP")
+                              ) : (
+                                <span>Pick a date</span>
+                              )}
+                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={
+                              field.value ? new Date(field.value) : new Date()
+                            }
+                            onSelect={field.onChange}
+                            initialFocus
+                          />
+                        </PopoverContent>
+                      </Popover>
+                      <FormMessage />
                     </FormItem>
                   )}
                 />
               </Show>
             </div>
           </ScrollArea>
-          <SheetFooter>
-            <SheetClose asChild>
+          <DialogFooter>
+            <DialogClose asChild>
               <Button type="submit">Save changes</Button>
-            </SheetClose>
-          </SheetFooter>
+            </DialogClose>
+          </DialogFooter>
         </Form>
       </form>
-    </SheetContent>
+    </DialogContent>
   );
-};
+}

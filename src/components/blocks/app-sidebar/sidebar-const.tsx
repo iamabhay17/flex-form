@@ -63,9 +63,9 @@ export const sidebarItems = [
     id: "switch",
     icon: ToggleRight, // Matches a switch visually
   },
-  {
-    title: "Combobox",
-    id: "combobox",
-    icon: Search, // Suggests a searchable dropdown
-  },
+  // {
+  //   title: "Combobox",
+  //   id: "combobox",
+  //   icon: Search, // Suggests a searchable dropdown
+  // },
 ];

@@ -3,6 +3,7 @@ import { siteConfig } from "@/config";
 
 import type { Metadata } from "next";
 import { geistMono, geistSans } from "@/fonts";
+import { ThemeProvider } from "@/provider/theme-provider";
 
 export const metadata: Metadata = {
   title: {
@@ -33,8 +34,9 @@ export default function RootLayout({
     <html lang="en">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        suppressHydrationWarning
       >
-        {children}
+        <ThemeProvider>{children}</ThemeProvider>
       </body>
     </html>
   );

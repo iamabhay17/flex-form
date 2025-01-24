@@ -15,6 +15,8 @@ export interface IFormField {
     minLength?: number;
     maxLength?: number;
     pattern?: string;
+    gte?: number;
+    lte?: number;
   };
   options?: string[];
 }
