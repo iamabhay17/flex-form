@@ -97,7 +97,7 @@ const generateSchema = (fields: IFormField[]): string => {
     }
 
     // Add the field schema to the output
-    schema += `\t${key} = ${fieldSchema};\n`;
+    schema += `\t${key} : ${fieldSchema};\n`;
   });
 
   schema += `});\n`;

@@ -1,3 +1,4 @@
+import useLocalStorage from "@/hooks/use-local-storage";
 import { toast } from "sonner";
 import { create } from "zustand";
 
@@ -133,50 +134,56 @@ export const useFormStore = create<IFormStore>((set, get) => ({
 
   /**
    * Save the form
-   * @returns The updated sections
    */
   save: () => {
-    if (typeof window === "undefined") return;
-    const data = JSON.stringify(get().sections);
-    localStorage.setItem("flexform-data", data);
-    toast.success("Form saved", {
-      description: "Your form has been saved to your browser's local storage",
-    });
+    const [_, setValue] = useLocalStorage("flexform-data", []);
+    if (typeof window !== "undefined") {
+      setValue(get().sections);
+      toast.success("Form saved", {
+        description: "Your form has been saved to your browser's local storage",
+      });
+    }
   },
+
   /**
    * Restore the form
-   * @returns The updated sections
    */
   restore: () => {
-    if (typeof window === "undefined") return;
-    const data = localStorage.getItem("flexform-data");
-    if (data) {
-      set({ sections: JSON.parse(data) });
-      localStorage.removeItem("flexform-data");
+    const [storedValue, setValue] = useLocalStorage("flexform-data", []);
+    if (typeof window !== "undefined" && storedValue) {
+      set({ sections: storedValue });
+      setValue([]); // Clear after restore
+      toast.success("Form restored", {
+        description:
+          "Your form has been restored from your browser's local storage",
+      });
+    } else {
+      set({ sections: [] });
     }
-    toast.success("Form restored", {
-      description:
-        "Your form has been restored from your browser's local storage",
-    });
   },
 
   /**
    * Clear the form
-   * @returns The updated sections
    */
   clear: () => {
-    if (typeof window === "undefined") return;
-    localStorage.removeItem("flexform-data");
-    set({ sections: [] });
+    const [_, __, removeValue] = useLocalStorage("flexform-data", []);
+    if (typeof window !== "undefined") {
+      removeValue();
+      set({ sections: [] });
+      toast.success("Form cleared", {
+        description: "Your form data has been removed from local storage",
+      });
+    }
   },
 
   /**
    * Check if previous data exists
-   * @returns Whether previous data exists
    */
   previousDataExists: () => {
-    if (typeof window === "undefined") return false;
-    const data = localStorage.getItem("flexform-data");
-    return data !== null;
+    const [storedValue] = useLocalStorage("flexform-data", []);
+    if (typeof window !== "undefined") {
+      return !!storedValue;
+    }
+    return false;
   },
 }));

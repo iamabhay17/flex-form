@@ -86,7 +86,7 @@ const InstallationSteps = () => {
             Initialize the project with shadcn/ui using the following command:
           </span>
         </div>
-        <div className="ml-11">
+        <div className="">
           <CodeBlock code={initialize} />
         </div>
       </motion.li>
@@ -100,7 +100,7 @@ const InstallationSteps = () => {
             Install required dependencies:
           </span>
         </div>
-        <div className="ml-11">
+        <div className="">
           <CodeBlock code={installZod} />
         </div>
       </motion.li>
@@ -114,7 +114,7 @@ const InstallationSteps = () => {
             Add the required components:
           </span>
         </div>
-        <div className="ml-11">
+        <div className="">
           <CodeBlock code={installComponents} />
         </div>
       </motion.li>

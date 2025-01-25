@@ -39,6 +39,9 @@ import {
   FormDescription,
   FormMessage,
 } from "@/components/ui/form";
+import { useGenerateValidations } from "@/hooks/use-generate-validations";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Card, CardFooter } from "@/components/ui/card";
 
 // Animation variants
 const containerVariants = {
@@ -242,8 +245,11 @@ export const Canvas = () => {
 
 // Droppable Component
 export const Droppable: FC<{ viewMode: boolean }> = ({ viewMode }) => {
-  const form = useForm({});
   const store = useFormStore();
+  const validations = useGenerateValidations();
+  const form = useForm({
+    resolver: zodResolver(validations),
+  });
 
   const [{ canDrop, isOver }, drop] = useDrop(() => ({
     accept: "card",
@@ -264,7 +270,7 @@ export const Droppable: FC<{ viewMode: boolean }> = ({ viewMode }) => {
   const isActive = canDrop && isOver;
 
   const onSubmit = (data: any) => {
-    console.log("data", data);
+    alert(JSON.stringify(data));
   };
 
   return (
@@ -324,7 +330,7 @@ export const Droppable: FC<{ viewMode: boolean }> = ({ viewMode }) => {
                 animate="visible"
                 exit="exit"
               >
-                <AnimatePresence mode="popLayout">
+                <AnimatePresence>
                   {store.sections.map((section) => (
                     <motion.div
                       key={section.id}
@@ -344,6 +350,14 @@ export const Droppable: FC<{ viewMode: boolean }> = ({ viewMode }) => {
                     </motion.div>
                   ))}
                 </AnimatePresence>
+                <Show if={store.sections.length > 0}>
+                  <div className=" my-4 flex justify-end gap-2">
+                    <Button variant="outline" onClick={() => form.reset()}>
+                      Cancel
+                    </Button>
+                    <Button type="submit">Submit</Button>
+                  </div>
+                </Show>
               </motion.div>
             </Form>
           </form>

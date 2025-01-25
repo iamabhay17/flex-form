@@ -57,6 +57,7 @@ export const SectionCard = ({
         title: data.title,
         description: "Add some description here",
         validations: { required: false },
+        subType: "text" as const,
       };
       store.insertItem(section.id, field);
     },

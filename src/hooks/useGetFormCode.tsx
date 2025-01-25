@@ -204,7 +204,18 @@ export const generateSectionsJSX = (store: any) => {
   return store.sections
     .map((section: any) => {
       const fieldsJSX = section.fields
-        .map((field: IFormField) => generateFieldJSX(field, `fieldInstance`))
+        .map((field: IFormField) => {
+          return `
+            <FormField
+              control={form.control}
+              name="${field.key}"
+              render={({ field: fieldInstance }) => (${generateFieldJSX(
+                field,
+                "fieldInstance"
+              )})}
+            />
+          `;
+        })
         .join("\n");
 
       return `
