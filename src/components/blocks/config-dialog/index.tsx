@@ -211,6 +211,8 @@ export function FieldConfigDialog({ data }: { data: IFormField }) {
         pattern: undefined,
         gte: undefined,
         lte: undefined,
+        minItems: undefined,
+        maxItems: undefined,
       },
       options: data.options || [],
       subType: data.subType || "text",
@@ -226,10 +228,7 @@ export function FieldConfigDialog({ data }: { data: IFormField }) {
     name: "options",
   });
 
-  console.log("formdata", form.formState.errors);
-
   const onSubmit = (values: any) => {
-    console.log("values", { ...data, ...values });
     store.updateItem({
       ...data,
       ...values,
@@ -407,14 +406,37 @@ export function FieldConfigDialog({ data }: { data: IFormField }) {
                   )}
                 />
               </Show>
-
+              <Show if={[FieldTypes.CHECKBOX_GROUP].includes(data.type)}>
+                <FormField
+                  control={form.control}
+                  name="validations.minItems"
+                  render={({ field }) => (
+                    <FormItem>
+                      <Label>Min Items</Label>
+                      <FormControl>
+                        <Input type="number" {...field} />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="validations.maxItems"
+                  render={({ field }) => (
+                    <FormItem>
+                      <Label>Max Items</Label>
+                      <FormControl>
+                        <Input type="number" {...field} />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+              </Show>
               <Show
                 if={
-                  [
-                    FieldTypes.CHECKBOX_GROUP,
-                    FieldTypes.INPUT,
-                    FieldTypes.TEXT_AREA,
-                  ].includes(data.type) && data.subType !== "number"
+                  [FieldTypes.INPUT, FieldTypes.TEXT_AREA].includes(
+                    data.type
+                  ) && data.subType !== "number"
                 }
               >
                 <FormField

@@ -5,7 +5,6 @@ import {
   List,
   ChevronDown,
   ToggleRight,
-  Search,
   Text,
 } from "lucide-react";
 

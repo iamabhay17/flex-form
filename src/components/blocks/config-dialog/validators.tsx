@@ -27,6 +27,8 @@ export const fieldValidator = z
       pattern: z.string().optional(),
       gte: z.coerce.number().optional(),
       lte: z.coerce.number().optional(),
+      minItems: z.coerce.number().optional(),
+      maxItems: z.coerce.number().optional(),
     }),
   })
   .superRefine((values, ctx) => {

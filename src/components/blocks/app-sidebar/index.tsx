@@ -1,5 +1,6 @@
 "use client";
 
+import { motion } from "framer-motion";
 import { sidebarItems } from "./sidebar-const";
 
 import { toast } from "sonner";
@@ -96,13 +97,44 @@ export const Field = (item: { icon: any; title: string; id: string }) => {
   }));
 
   return (
-    <Button
-      ref={drag as any}
-      variant="outline"
-      className={cn("w-full mb-2 justify-start", isDragging && "opacity-50")}
+    <motion.div
+      initial={false}
+      animate={
+        isDragging
+          ? {
+              scale: 1.05,
+              boxShadow: "0 5px 15px rgba(0,0,0,0.1)",
+              cursor: "grabbing",
+            }
+          : {
+              scale: 1,
+              boxShadow: "none",
+              cursor: "grab",
+            }
+      }
+      transition={{
+        type: "spring",
+        stiffness: 400,
+        damping: 25,
+      }}
+      whileHover={{ scale: 1.02 }}
     >
-      <item.icon />
-      {item.title}
-    </Button>
+      <Button
+        ref={drag as any}
+        variant="outline"
+        className={cn(
+          "w-full mb-2 justify-start transition-colors duration-200",
+          isDragging && "opacity-80 border-primary/50 bg-accent"
+        )}
+      >
+        <item.icon
+          className={cn(
+            "transition-transform duration-200",
+            isDragging && "scale-110"
+          )}
+        />
+        {item.title}
+      </Button>
+    </motion.div>
   );
 };

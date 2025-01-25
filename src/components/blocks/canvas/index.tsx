@@ -1,10 +1,11 @@
 "use client";
 
-import { FC, useState } from "react";
+import { type FC, useState } from "react";
 import { cn } from "@/lib/utils";
 import { useDrop } from "react-dnd";
 import { useFormStore } from "@/store";
 import { useForm } from "react-hook-form";
+import { motion, AnimatePresence } from "framer-motion";
 
 // Components
 import { Show } from "@/components/ui/show";
@@ -30,7 +31,54 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Form } from "@/components/ui/form";
+import {
+  Form,
+  FormItem,
+  FormLabel,
+  FormControl,
+  FormDescription,
+  FormMessage,
+} from "@/components/ui/form";
+
+// Animation variants
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1,
+      duration: 0.3,
+      ease: "easeOut",
+    },
+  },
+  exit: {
+    opacity: 0,
+    transition: {
+      duration: 0.2,
+      ease: "easeIn",
+    },
+  },
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      type: "spring",
+      stiffness: 400,
+      damping: 30,
+    },
+  },
+  exit: {
+    opacity: 0,
+    y: -20,
+    transition: {
+      duration: 0.2,
+    },
+  },
+};
 
 // Enums
 enum Tab {
@@ -51,93 +99,144 @@ export const Canvas = () => {
   const handleClear = () => store.clear();
 
   return (
-    <div className="px-2 space-y-4">
-      <Show if={tab === Tab.FORM}>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <Switch
-              id="preview-mode"
-              checked={viewMode}
-              onCheckedChange={setViewMode}
-            />
-            <Label htmlFor="preview-mode">Preview Mode</Label>
-          </div>
+    <motion.div
+      className="px-4 space-y-6"
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
+      exit="exit"
+    >
+      <AnimatePresence mode="wait">
+        {tab === Tab.FORM && (
+          <motion.div
+            variants={itemVariants}
+            className="flex items-center justify-between bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-10"
+          >
+            <div className="flex items-center space-x-3">
+              <Switch
+                id="preview-mode"
+                checked={viewMode}
+                onCheckedChange={setViewMode}
+              />
+              <Label
+                htmlFor="preview-mode"
+                className="text-muted-foreground font-medium"
+              >
+                Preview Mode
+              </Label>
+            </div>
 
-          <div className="flex justify-end gap-2">
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button variant="outline" size="icon" title="Reset Form">
-                  <RefreshCcw className="w-4 h-4" />
-                </Button>
-              </AlertDialogTrigger>
+            <div className="flex justify-end gap-3">
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-9 w-9 transition-colors hover:bg-muted"
+                  >
+                    <RefreshCcw className="h-4 w-4" />
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Reset form?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This will permanently delete your sections and remove all
+                      data.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={handleReset}
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    >
+                      Reset
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+
+              <Button
+                variant="outline"
+                onClick={handleSave}
+                className="gap-2 h-9"
+              >
+                <Save className="w-4 h-4" />
+                Save
+              </Button>
+
+              <Button onClick={() => setTab(Tab.CODE)} className="gap-2 h-9">
+                <Code className="w-4 h-4" />
+                Get Code
+              </Button>
+            </div>
+          </motion.div>
+        )}
+
+        {tab === Tab.CODE && (
+          <motion.div
+            variants={itemVariants}
+            className="sticky top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 py-2"
+          >
+            <Button
+              onClick={() => setTab(Tab.FORM)}
+              variant="secondary"
+              className="gap-2"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Back to Form
+            </Button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {previousDataExists && (
+          <motion.div
+            variants={itemVariants}
+            className="rounded-lg border bg-card text-card-foreground shadow-sm"
+          >
+            <AlertDialog open={previousDataExists}>
               <AlertDialogContent>
                 <AlertDialogHeader>
-                  <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                  <AlertDialogTitle>Restore previous work?</AlertDialogTitle>
                   <AlertDialogDescription>
-                    This action cannot be undone. This will permanently delete
-                    your section and remove your data.
+                    We found your previously saved work. Would you like to
+                    restore it?
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleReset}>
-                    Continue
+                  <AlertDialogCancel onClick={handleClear}>
+                    Start Fresh
+                  </AlertDialogCancel>
+                  <AlertDialogAction onClick={handleRestore}>
+                    Restore
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-            {/* Save Locally */}
-            <Button variant="outline" onClick={handleSave}>
-              <Save className="w-4 h-4" /> Save Locally
-            </Button>
+      <AnimatePresence mode="wait">
+        {!previousDataExists && tab === Tab.FORM && (
+          <motion.div
+            variants={itemVariants}
+            className="rounded-lg border bg-card text-card-foreground shadow-sm"
+          >
+            <Droppable viewMode={viewMode} />
+          </motion.div>
+        )}
 
-            {/* Get Code */}
-            <Button onClick={() => setTab(Tab.CODE)}>
-              <Code className="w-4 h-4" /> Get Code
-            </Button>
-          </div>
-        </div>
-      </Show>
-
-      <Show if={tab === Tab.CODE}>
-        <Button onClick={() => setTab(Tab.FORM)} variant="secondary">
-          <ArrowLeft className="w-4 h-4" /> Back to Form
-        </Button>
-      </Show>
-
-      <div className="border rounded-lg">
-        {/* Previous Data Restore Prompt */}
-        <Show if={previousDataExists}>
-          <AlertDialog open={previousDataExists}>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>We found previous data</AlertDialogTitle>
-                <AlertDialogDescription>
-                  Would you like to restore your previous data?
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel onClick={handleClear}>
-                  Cancel
-                </AlertDialogCancel>
-                <AlertDialogAction onClick={handleRestore}>
-                  Restore Data
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-        </Show>
-
-        {/* Form or Code Generator */}
-        <Show if={!previousDataExists && tab === Tab.FORM}>
-          <Droppable viewMode={viewMode} />
-        </Show>
-        <Show if={tab === Tab.CODE}>
-          <CodeGenerator />
-        </Show>
-      </div>
-    </div>
+        {tab === Tab.CODE && (
+          <motion.div variants={itemVariants}>
+            <CodeGenerator />
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
   );
 };
 
@@ -169,35 +268,87 @@ export const Droppable: FC<{ viewMode: boolean }> = ({ viewMode }) => {
   };
 
   return (
-    <div
+    <motion.div
       ref={drop as any}
+      animate={{
+        backgroundColor: isActive ? "hsl(var(--accent)/0.2)" : "transparent",
+        transition: {
+          duration: 0.3,
+          ease: "easeInOut",
+        },
+      }}
       className={cn(
-        "p-4 min-h-[75vh]",
-        isActive ? "bg-sky-50 opacity-0.5" : ""
+        "p-6 min-h-[75vh] relative rounded-lg",
+        "transition-all duration-300 ease-in-out"
       )}
     >
-      {/* Empty State */}
-      <Show if={store.sections.length === 0}>
-        <EmptySplash />
-      </Show>
+      {isActive && (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{
+            opacity: 1,
+            scale: 1,
+            transition: {
+              type: "spring",
+              stiffness: 400,
+              damping: 30,
+            },
+          }}
+          className={cn(
+            "absolute inset-4 rounded-lg pointer-events-none",
+            "border-2 border-dashed border-accent",
+            "bg-accent/5 dark:bg-accent/10"
+          )}
+        />
+      )}
 
-      {/* Form Sections */}
-      <Show if={store.sections.length > 0}>
-        <form onSubmit={form.handleSubmit(onSubmit)}>
-          <Form {...form}>
-            <div className="flex flex-col gap-4">
-              {store.sections.map((section) => (
-                <SectionCard
-                  viewMode={viewMode}
-                  form={form}
-                  key={section.id}
-                  section={section}
-                />
-              ))}
-            </div>
-          </Form>
-        </form>
-      </Show>
-    </div>
+      <AnimatePresence mode="wait">
+        {store.sections.length === 0 && (
+          <motion.div
+            variants={itemVariants}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
+          >
+            <EmptySplash />
+          </motion.div>
+        )}
+
+        {store.sections.length > 0 && (
+          <form onSubmit={form.handleSubmit(onSubmit)}>
+            <Form {...form}>
+              <motion.div
+                className="flex flex-col gap-6"
+                variants={containerVariants}
+                initial="hidden"
+                animate="visible"
+                exit="exit"
+              >
+                <AnimatePresence mode="popLayout">
+                  {store.sections.map((section) => (
+                    <motion.div
+                      key={section.id}
+                      layout
+                      layoutId={section.id}
+                      variants={itemVariants}
+                      initial="hidden"
+                      animate="visible"
+                      exit="exit"
+                      className="relative"
+                    >
+                      <SectionCard
+                        viewMode={viewMode}
+                        form={form}
+                        section={section}
+                      />
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
+              </motion.div>
+            </Form>
+          </form>
+        )}
+      </AnimatePresence>
+    </motion.div>
   );
 };
