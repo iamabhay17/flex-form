@@ -184,7 +184,9 @@ export function CardConfigDialog({ data }: { data: ISection }) {
 
           <DialogFooter>
             <DialogClose asChild>
-              <Button type="submit">Save changes</Button>
+              <Button type="button" onClick={form.handleSubmit(onSubmit)}>
+                Save changes
+              </Button>
             </DialogClose>
           </DialogFooter>
         </Form>
@@ -590,7 +592,9 @@ export function FieldConfigDialog({ data }: { data: IFormField }) {
           </ScrollArea>
           <DialogFooter>
             <DialogClose asChild>
-              <Button type="submit">Save changes</Button>
+              <Button type="button" onClick={form.handleSubmit(onSubmit)}>
+                Save changes
+              </Button>
             </DialogClose>
           </DialogFooter>
         </Form>

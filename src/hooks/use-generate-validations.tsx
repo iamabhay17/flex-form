@@ -1,126 +1,164 @@
 import { IFormField, useFormStore } from "@/store";
 import { useMemo } from "react";
-import { z, ZodDate, ZodString, ZodType } from "zod";
+import { z } from "zod";
 
-const createZodFieldSchema = (field: IFormField): ZodType<any> => {
-  let fieldSchema: ZodType<any>;
+const createZodFieldSchema = (field: IFormField): z.ZodType<any> => {
+  let fieldSchema: z.ZodType<any>;
 
-  // Determine base schema based on field type and subType
+  // Base schema based on field type
   switch (field.type) {
     case "input":
       switch (field.subType) {
         case "email":
-          fieldSchema = z.string().email({ message: "Enter a valid email" });
+          fieldSchema = z.string().email("Please enter a valid email address");
+          if (field.validations.pattern) {
+            fieldSchema = (fieldSchema as z.ZodString).regex(
+              new RegExp(field.validations.pattern),
+              {
+                message: `${field.title} must match the required pattern`,
+              }
+            );
+          }
           break;
         case "number":
-          fieldSchema = z.number({ message: "Enter a valid number" });
+          fieldSchema = z
+            .string()
+            .transform((val) => (val === "" ? undefined : Number(val)))
+            .pipe(
+              z.number({
+                invalid_type_error: "Please enter a valid number",
+                required_error: "This field is required",
+              })
+            );
+          if (field.validations.min !== undefined) {
+            fieldSchema = (fieldSchema as z.ZodNumber).min(
+              field.validations.min,
+              {
+                message: `${field.title} must be at least ${field.validations.min}`,
+              }
+            );
+          }
+          if (field.validations.max !== undefined) {
+            fieldSchema = (fieldSchema as z.ZodNumber).max(
+              field.validations.max,
+              {
+                message: `${field.title} must be at most ${field.validations.max}`,
+              }
+            );
+          }
           break;
         case "text":
         case "password":
+          fieldSchema = z.string();
+          if (field.validations.pattern) {
+            fieldSchema = (fieldSchema as z.ZodString).regex(
+              new RegExp(field.validations.pattern),
+              {
+                message: `${field.title} must match the required pattern`,
+              }
+            );
+          }
+          if (field.validations.minLength !== undefined) {
+            fieldSchema = (fieldSchema as z.ZodString).min(
+              field.validations.minLength,
+              {
+                message: `${field.title} must be at least ${field.validations.minLength} characters`,
+              }
+            );
+          }
+          if (field.validations.maxLength !== undefined) {
+            fieldSchema = (fieldSchema as z.ZodString).max(
+              field.validations.maxLength,
+              {
+                message: `${field.title} must be at most ${field.validations.maxLength} characters`,
+              }
+            );
+          }
+          break;
+        case "tel":
         case "url":
-          fieldSchema = z.string({ message: "Enter a valid string" });
+          fieldSchema = z.string();
           break;
         default:
-          throw new Error(`Unsupported input subtype: ${field.subType}`);
+          fieldSchema = z.string();
       }
       break;
 
     case "text-area":
-      fieldSchema = z.string({ message: "Enter a valid string" });
+      fieldSchema = z.string();
+      if (field.validations.minLength !== undefined) {
+        fieldSchema = (fieldSchema as z.ZodString).min(
+          field.validations.minLength,
+          {
+            message: `${field.title} must be at least ${field.validations.minLength} characters`,
+          }
+        );
+      }
+      if (field.validations.maxLength !== undefined) {
+        fieldSchema = (fieldSchema as z.ZodString).max(
+          field.validations.maxLength,
+          {
+            message: `${field.title} must be at most ${field.validations.maxLength} characters`,
+          }
+        );
+      }
       break;
 
     case "datetime":
-      fieldSchema = z.date({ message: "Enter a valid date" });
+      fieldSchema = z
+        .string()
+        .transform((val) => (val ? new Date(val) : undefined))
+        .pipe(
+          z.date({
+            invalid_type_error: "Please enter a valid date",
+            required_error: "This field is required",
+          })
+        );
       break;
 
     case "checkbox":
-      fieldSchema = z.boolean({ message: "This field is required" });
+      fieldSchema = z.boolean();
       break;
 
     case "checkbox-group":
-      fieldSchema = z.array(z.string({ message: "Select a valid option" }));
+      fieldSchema = z.array(z.string());
+      if (field.validations.minItems !== undefined) {
+        fieldSchema = (fieldSchema as z.ZodArray<z.ZodAny>).min(
+          field.validations.minItems,
+          {
+            message: `Please select at least ${field.validations.minItems} options`,
+          }
+        );
+      }
+      if (field.validations.maxItems !== undefined) {
+        fieldSchema = (fieldSchema as z.ZodArray<z.ZodAny>).max(
+          field.validations.maxItems,
+          {
+            message: `Please select at most ${field.validations.maxItems} options`,
+          }
+        );
+      }
       break;
 
     case "radio-group":
     case "select":
-      fieldSchema = z.string({ message: "Select an option" });
+      fieldSchema = z.string();
       break;
 
     default:
-      throw new Error(`Unsupported field type: ${field.type}`);
+      fieldSchema = z.string();
   }
 
-  if (!fieldSchema) {
-    throw new Error(`Failed to create schema for field: ${field.key}`);
-  }
-
-  // Apply validations
-  const { validations } = field;
-  if (validations) {
-    // Required
-    if (validations.required === false) {
-      fieldSchema = fieldSchema.optional();
-    }
-
-    // Min and Max for Strings or Arrays
-    if (validations.minLength !== undefined) {
-      fieldSchema = (fieldSchema as ZodString).min(validations.minLength, {
-        message: `${field.title} must be at least ${validations.minLength} characters`,
-      });
-    }
-    if (validations.maxLength !== undefined) {
-      fieldSchema = (fieldSchema as ZodString).max(validations.maxLength, {
-        message: `${field.title} must be at most ${validations.maxLength} characters`,
-      });
-    }
-
-    // Min and Max for Strings or Arrays
-    if (validations.minItems !== undefined) {
-      fieldSchema = (fieldSchema as ZodString).min(validations.minItems, {
-        message: `${field.title} must be at least ${validations.minItems} characters`,
-      });
-    }
-    if (validations.maxItems !== undefined) {
-      fieldSchema = (fieldSchema as ZodString).max(validations.maxItems, {
-        message: `${field.title} must be at most ${validations.maxItems} characters`,
-      });
-    }
-
-    // Regex Pattern (for Strings)
-    if (validations.pattern) {
-      fieldSchema = (fieldSchema as ZodString).regex(
-        new RegExp(validations.pattern),
-        { message: `${field.title} must match the required pattern` }
-      );
-    }
-
-    // Min and Max for Numbers
-    if (field.type === "input" && field.subType === "number") {
-      if (validations.min !== undefined) {
-        fieldSchema = (fieldSchema as z.ZodNumber).min(validations.min, {
-          message: `${field.title} must be at least ${validations.min}`,
-        });
-      }
-      if (validations.max !== undefined) {
-        fieldSchema = (fieldSchema as z.ZodNumber).max(validations.max, {
-          message: `${field.title} must be at most ${validations.max}`,
-        });
-      }
-    }
-
-    // Min and Max for Dates
-    if (field.type === "datetime") {
-      if (validations.gte) {
-        fieldSchema = (fieldSchema as ZodDate).min(new Date(validations.gte), {
-          message: `${field.title} must be on or after ${validations.gte}`,
-        });
-      }
-      if (validations.lte) {
-        fieldSchema = (fieldSchema as ZodDate).max(new Date(validations.lte), {
-          message: `${field.title} must be on or before ${validations.lte}`,
-        });
-      }
-    }
+  // Apply required validation
+  if (field.validations.required) {
+    fieldSchema = fieldSchema.pipe(
+      z.any({
+        required_error: `${field.title} is required`,
+        invalid_type_error: `${field.title} is required`,
+      })
+    );
+  } else {
+    fieldSchema = fieldSchema.optional();
   }
 
   return fieldSchema;
@@ -129,23 +167,21 @@ const createZodFieldSchema = (field: IFormField): ZodType<any> => {
 export const useGenerateValidations = () => {
   const store = useFormStore();
 
-  // Compute fields using memoization for performance
-  const fields = useMemo(() => {
-    return store.sections.flatMap((section) => section.fields);
+  const schema = useMemo(() => {
+    try {
+      const fields = store.sections.flatMap((section) => section.fields);
+      const schemaShape: Record<string, z.ZodType<any>> = {};
+
+      fields.forEach((field) => {
+        schemaShape[field.key] = createZodFieldSchema(field);
+      });
+
+      return z.object(schemaShape);
+    } catch (error) {
+      console.error("Error generating validations:", error);
+      return z.object({});
+    }
   }, [store.sections]);
 
-  try {
-    // Build the schema shape dynamically
-    const schemaShape: Record<string, ZodType<any>> = {};
-    fields.forEach((field) => {
-      schemaShape[field.key] = createZodFieldSchema(field);
-    });
-
-    // Return the generated Zod schema
-    return z.object(schemaShape);
-  } catch (error) {
-    console.error("Error generating validations:", error);
-    // Return an empty schema as fallback to prevent application crash
-    return z.object({});
-  }
+  return schema;
 };

@@ -31,17 +31,9 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import {
-  Form,
-  FormItem,
-  FormLabel,
-  FormControl,
-  FormDescription,
-  FormMessage,
-} from "@/components/ui/form";
+import { Form } from "@/components/ui/form";
 import { useGenerateValidations } from "@/hooks/use-generate-validations";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Card, CardFooter } from "@/components/ui/card";
 
 // Animation variants
 const containerVariants = {
@@ -94,12 +86,9 @@ export const Canvas = () => {
   const store = useFormStore();
   const [tab, setTab] = useState(Tab.FORM);
   const [viewMode, setViewMode] = useState(false);
-  const previousDataExists = store.previousDataExists();
 
   const handleReset = () => store.reset();
   const handleSave = () => store.save();
-  const handleRestore = () => store.restore();
-  const handleClear = () => store.clear();
 
   return (
     <motion.div
@@ -194,37 +183,8 @@ export const Canvas = () => {
         )}
       </AnimatePresence>
 
-      <AnimatePresence>
-        {previousDataExists && (
-          <motion.div
-            variants={itemVariants}
-            className="rounded-lg border bg-card text-card-foreground shadow-sm"
-          >
-            <AlertDialog open={previousDataExists}>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Restore previous work?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    We found your previously saved work. Would you like to
-                    restore it?
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel onClick={handleClear}>
-                    Start Fresh
-                  </AlertDialogCancel>
-                  <AlertDialogAction onClick={handleRestore}>
-                    Restore
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
       <AnimatePresence mode="wait">
-        {!previousDataExists && tab === Tab.FORM && (
+        {tab === Tab.FORM && (
           <motion.div
             variants={itemVariants}
             className="rounded-lg border bg-card text-card-foreground shadow-sm"
