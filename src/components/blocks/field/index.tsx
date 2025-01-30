@@ -296,6 +296,7 @@ export const Field = ({
               onCheckedChange={fieldInstance.onChange}
             />
           </FormControl>
+          <FormMessage />
         </FormItem>
       );
 

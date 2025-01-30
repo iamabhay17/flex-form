@@ -49,7 +49,10 @@ const generateSchema = (fields: IFormField[]): string => {
         fieldSchema += `.array(z.string())`;
         break;
       case "datetime":
-        fieldSchema += `.date()`;
+        fieldSchema += `.coerce.number()`;
+        break;
+      case "switch":
+        fieldSchema += `.boolean()`;
         break;
       default:
         fieldSchema += `.string()`;

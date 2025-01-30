@@ -1,7 +1,7 @@
 import { IFormField, useFormStore } from "@/store";
+import { format } from "date-fns";
 import { useMemo } from "react";
 import { z } from "zod";
-
 const createZodFieldSchema = (field: IFormField): z.ZodType<any> => {
   let fieldSchema: z.ZodType<any>;
 
@@ -105,15 +105,23 @@ const createZodFieldSchema = (field: IFormField): z.ZodType<any> => {
       break;
 
     case "datetime":
-      fieldSchema = z
-        .string()
-        .transform((val) => (val ? new Date(val) : undefined))
-        .pipe(
-          z.date({
-            invalid_type_error: "Please enter a valid date",
-            required_error: "This field is required",
-          })
-        );
+      fieldSchema = z.coerce.number();
+      if (field.validations.gte) {
+        fieldSchema = (fieldSchema as any).gte(field.validations.gte, {
+          message: `${field.title} must be after ${format(
+            new Date(field.validations.gte),
+            "dd-MMM-yyyy"
+          )}`,
+        });
+      }
+      if (field.validations.lte) {
+        fieldSchema = (fieldSchema as any).lte(field.validations.lte, {
+          message: `${field.title} must be before ${format(
+            new Date(field.validations.lte),
+            "dd-MMM-yyyy"
+          )}`,
+        });
+      }
       break;
 
     case "checkbox":
@@ -144,27 +152,22 @@ const createZodFieldSchema = (field: IFormField): z.ZodType<any> => {
     case "select":
       fieldSchema = z.string();
       break;
-
+    case "switch":
+      fieldSchema = z.boolean();
+      break;
     default:
       fieldSchema = z.string();
   }
 
   // Apply required validation
-  if (field.validations.required) {
-    fieldSchema = fieldSchema.pipe(
-      z.any({
-        required_error: `${field.title} is required`,
-        invalid_type_error: `${field.title} is required`,
-      })
-    );
-  } else {
+  if (!field.validations.required) {
     fieldSchema = fieldSchema.optional();
   }
 
   return fieldSchema;
 };
 
-export const useGenerateValidations = () => {
+export const useGenerateValidations = (): z.ZodObject<any> => {
   const store = useFormStore();
 
   const schema = useMemo(() => {
